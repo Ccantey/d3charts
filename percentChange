@@ -150,3 +150,26 @@ function percentChange(dataset,config){
       .style("text-anchor", "end")
       .text("Percent Increase");
 }
+//kickoff
+d3.csv("data.csv", function(error, data) { 
+  //set configurable object properties
+  var config ={
+    margin: {top: 20, right: 00, bottom: 240, left: 230},
+    colors: ["#5982b5","#b8b8b8"],
+    keyString: function(key) { return key == "2009 Usage (therms)" || key == "2013 Usage (therms)"; }, //comparison columns in chart
+    htmlId: "#domId",
+    yLabel: "Therms",
+    columns: ["Location", "Building Size (cubic feet)", "2009 Usage (therms)", "2013 Usage (therms)", "2009 Energy Intensity (therms/ft3)", "2013 Energy Intensity (therms/ft3)", "Percent Change"]
+  };  
+  config.width = 960 - config.margin.left - config.margin.right;
+  config.height = 550 - config.margin.top - config.margin.bottom;
+
+  //remove the "totals" column after the table has loaded
+  data.pop();
+
+  //reset config properties and call percent change bar chart  
+  config.htmlId= "#change";
+  config.yLabel="Percent Change"
+  percentChange(data,config);
+
+});
