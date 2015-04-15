@@ -135,7 +135,7 @@ function groupedBarChart(dataset, config){
 }
 
 //kickoff
-d3.csv("./data/NaturalGas.csv", function(error, data) { 
+d3.csv("data.csv", function(error, data) { 
   //set configurable object properties
   var config ={
     margin: {top: 20, right: 00, bottom: 240, left: 230},
