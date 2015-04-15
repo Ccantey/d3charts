@@ -45,4 +45,4 @@ d3.csv("data.csv", function(error, data) {
   
   //Create the HTML table with data bindings
   table(data, config);
-  }
+  });
