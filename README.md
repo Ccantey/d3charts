@@ -1,7 +1,7 @@
 D3 Charts
 =====================================
 
-A responsive for configurable (reusable) d3 charts.
+A repository for configurable (reusable) d3 charts.
 
 Chart Types
 --------
