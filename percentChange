@@ -1,0 +1,152 @@
+//configurable positive/negative y-axis bar chart
+//pretty hacky at times (see: line27 - should query data rather than hard code)
+
+function percentChange(dataset,config){
+
+  var dataColumns = d3.keys(dataset[0]).filter(function(key) { return key == "Percent Change" ; });
+
+  dataset.forEach(function(d) {        
+      d.columnValues = dataColumns.map(function(name) { return {name: name, value: +d[name]}; });
+      console.log(d.columnValues);
+  });
+  
+  var x0 = d3.scale.ordinal()
+             .rangeRoundBands([0, config.width], .1)
+             .domain(dataset.map(function(d) { return d.Location; }));
+
+  var x1 = d3.scale.ordinal();
+
+  var xAxis = d3.svg.axis()
+             .scale(x0)
+  .orient("bottom");
+
+  var y = d3.scale.linear()
+      .range([config.height, 0]);  
+    
+  var yscale = d3.scale.linear()
+     .domain([3.5, -1])
+     .range([0,375]);
+   
+  var formatPercent = d3.format("%");
+  
+  var yAxis = d3.svg.axis().scale(yscale).orient("left").ticks(7).tickFormat(formatPercent);
+
+  //Define tooltip for hover-over info windows
+  var div = d3.select("body").append("div")   
+              .attr("class", "tooltip")               
+              .style("opacity", 0);
+  
+  x1.domain(dataColumns).rangeRoundBands([0, x0.rangeBand()]);
+  //use extent instead of max?
+
+  y.domain([0, 
+            d3.max(dataset, function(d) { return d3.max(d.columnValues, function(d) { return d.value; }); })
+            ]);
+
+  var svg = d3.select(config.htmlId).append("svg")
+    .attr("width", config.width + config.margin.left + config.margin.right)
+    .attr("height", config.height + config.margin.top + config.margin.bottom)
+     .append("g")
+    .attr("transform", "translate(" + config.margin.left + "," + config.margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + config.height + ")")
+      .call(xAxis)
+      .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-2em")
+            .attr("dy", "1em")
+            .attr("transform", function(d) {
+                return "rotate(-55)" 
+                });
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Percent Change");
+
+  var xScale = svg.selectAll(".Location")
+      .data(dataset)
+      .enter().append("g")
+      .attr("class", "g")
+      .attr("transform", function(d) { return "translate(" + x0(d.Location) + ",0)"; });
+
+  xScale.selectAll(".bar")
+      .data(function(d) { return d.columnValues; })
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("class", function(d){return d.value < 0 ? "negative" : "positive";})
+      .attr("width", x1.rangeBand())
+      .attr("x", function(d) { return x1(d.name); })
+      .attr("y", function(d) { return y(Math.max(0, d.value)); })
+      .attr("height", function(d) { return Math.abs(config.height - y(d.value)); })
+      .style("fill", function(d) {
+          if (d.value < 0){
+            return "steelblue";
+          }  else {
+            return "brown";
+          }
+      })
+      .on("mouseover", function(d) {  
+              d3.select(this)
+                  .style("fill", "GoldenRod");
+          
+          var info = div
+                  .style("opacity", 1)
+                  .style("left", (d3.event.pageX+30) + "px")
+                  .style("top", (d3.event.pageY-60) + "px")
+                  .text(d.name)
+                  .append("p").text((d.value*100).toFixed(1) +"%");
+            })
+        .on('mouseout', function(d){
+            d3.select(this)
+              .style("fill", function(d) {
+                if (d.value < 0){
+                  return "steelblue";
+                }  else {
+                  return "brown";
+                }
+            })
+               div.style("opacity", 0);
+                });
+
+  var legend = svg.selectAll(".legend")
+      .data(dataColumns.slice())
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(-100," + i * 20 + ")"; });
+
+  legend.append("rect")
+      .attr("x", config.width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", "steelblue");
+
+  legend.append("rect")
+      .attr("x", config.width - 18)
+      .attr("y", 24)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", "brown");
+
+  legend.append("text")
+      .attr("x", config.width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text("Percent Decrease");
+
+
+  legend.append("text")
+      .attr("x", config.width - 24)
+      .attr("y", 33)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text("Percent Increase");
+}
