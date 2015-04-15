@@ -1,0 +1,157 @@
+//Configurable grouped bar chart function
+
+function  generateLegend(svg, dataColumns, config, color){
+  var legend = svg.selectAll(".legend")
+      .data(dataColumns.slice())
+      .enter().append("g")
+      .attr("class", "legend")
+      .attr("transform", function(d, i) { return "translate(-100," + i * 20 + ")"; });
+
+  legend.append("rect")
+      .attr("x", config.width + 30)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
+
+  legend.append("text")
+      .attr("x", config.width + 20)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .text(function(d) { return d; });
+}
+
+function groupedBarChart(dataset, config){
+   
+    var colormap = {"2009 Usage (therms)": "#5982b5","2013 Usage (therms)": "#b8b8b8", "2009 Energy Intensity (therms/ft3)": "#5982b5","2013 Energy Intensity (therms/ft3)": "#b8b8b8" };
+
+  //Define tooltip for hover-over info windows
+    var div = d3.select("body").append("div")   
+                .attr("class", "tooltip")               
+                .style("opacity", 0);
+        
+    var x0 = d3.scale.ordinal()
+        .rangeRoundBands([0, config.width], .1);
+
+    var x1 = d3.scale.ordinal();
+  
+    var y = d3.scale.linear()
+        .range([config.height, 0]);
+    
+    var color = d3.scale.ordinal()
+        .range(config.colors);
+    
+    var xAxis = d3.svg.axis()
+        .scale(x0)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .tickFormat(d3.format(",g"));
+
+    var svg = d3.select(config.htmlId).append("svg")
+        .attr("width", config.width + config.margin.left + config.margin.right)
+        .attr("height", config.height + config.margin.top + config.margin.bottom)
+         .append("g")
+        .attr("transform", "translate(" + config.margin.left + "," + config.margin.top + ")");
+    
+
+  //remove totals column from histogram
+    //dataset.pop();
+
+    var dataColumns = d3.keys(dataset[0]).filter(config.keyString );
+    //var dataColumns = d3.keys(dataset[0]).filter(function(key) { return key == "2009 Energy Intensity (therms/ft3)" || key == "2013 Energy Intensity (therms/ft3)"; });
+    //var dataColumns = d3.keys(data[0]).filter(function(key) { return key == "Percent Change" ; });
+    console.log(dataColumns);
+    dataset.forEach(function(d) {        
+        d.columnValues = dataColumns.map(function(name) { return {name: name, value: +d[name]}; });
+        // d.thermsperfoot = dataColumns.map(function(name) { return {name: name, value: +d[name]}; });
+        // d.changePercent = dataColumns.map(function(name) { return {name: name, value: +d[name]}; });
+    });
+    //console.log(data);
+  
+   //have to hard code Location in here - this is the x axis values
+  x0.domain(dataset.map(function(d) { return d.Location; })); //hard code
+  x1.domain(dataColumns).rangeRoundBands([0, x0.rangeBand()]);
+  y.domain([0, d3.max(dataset, function(d) { return d3.max(d.columnValues, function(d) { return d.value; }); })]);
+  
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + config.height + ")")
+      .call(xAxis)
+      .selectAll("text")  
+            .style("text-anchor", "end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform", function(d) {
+                return "rotate(-65)" 
+                });
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text(config.yLabel); 
+    
+  var xScale = svg.selectAll(".Location") //hard code .Location class
+      .data(dataset)
+      .enter().append("g")
+      .attr("class", "g")
+      .attr("transform", function(d) { return "translate(" + x0(d.Location) + ",0)"; console.log(d);}); //hard code
+
+  xScale.selectAll(".bar")
+      .data(function(d) { return d.columnValues; console.log(d); })
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("width", x1.rangeBand())
+      .attr("x", function(d) { return x1(d.name); })
+      .attr("y", function(d) { return y(d.value); })
+      .attr("height", function(d) { return config.height - y(d.value); })
+      .style("fill", function(d) { return color(d.name); })
+      .on("mouseover", function(d) {  
+              d3.select(this)
+                  .style("fill", "GoldenRod");
+
+          var info = div
+                  .style("opacity", 1)
+                  .style("left", (d3.event.pageX+30) + "px")
+                  .style("top", (d3.event.pageY-60) + "px")
+                  .text(d.name)
+                  .append("p").text(d.value);
+            })
+        .on('mouseout', function(d){
+              d3.select(this)
+                  .style("fill", colormap[d.name]);
+              div.style("opacity", 0);
+                }); 
+
+  generateLegend(svg, dataColumns, config, color);
+
+}
+
+//kickoff
+d3.csv("./data/NaturalGas.csv", function(error, data) { 
+  //set configurable object properties
+  var config ={
+    margin: {top: 20, right: 00, bottom: 240, left: 230},
+    colors: ["#5982b5","#b8b8b8"],
+    keyString: function(key) { return key == "2009 Usage (therms)" || key == "2013 Usage (therms)"; }, //comparison columns in chart
+    htmlId: "#domId",
+    yLabel: "Therms",
+    columns: ["Location", "Building Size (cubic feet)", "2009 Usage (therms)", "2013 Usage (therms)", "2009 Energy Intensity (therms/ft3)", "2013 Energy Intensity (therms/ft3)", "Percent Change"]
+  };  
+  config.width = 960 - config.margin.left - config.margin.right;
+  config.height = 550 - config.margin.top - config.margin.bottom;
+
+  //remove the "totals" column after the table has loaded
+  data.pop();
+  
+  //reset config.htmlId and call first grouped bar chart
+  config.htmlId= "#usage";
+  groupedBarChart(data,config);
+  }
