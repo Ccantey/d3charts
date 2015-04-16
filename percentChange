@@ -1,5 +1,5 @@
 //configurable positive/negative y-axis bar chart
-//pretty hacky at times (see: line27 - should query data rather than hard code)
+
 
 function percentChange(dataset,config){
 
@@ -24,7 +24,8 @@ function percentChange(dataset,config){
       .range([config.height, 0]);  
     
   var yscale = d3.scale.linear()
-     .domain([3.5, -1])
+     //d3.extent should work rather than [min, max]
+     .domain([d3.min(dataset, function(d) { return d3.min(d.columnValues, function(d) { return d.value; }); }),d3.max(dataset, function(d) { return d3.min(d.columnValues, function(d) { return d.value; }); })])
      .range([0,375]);
    
   var formatPercent = d3.format("%");
