@@ -52,12 +52,12 @@ function percentChange(dataset,config){
 
   svg.append("g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + config.height + ")")
+      .attr("transform", "translate(0," + config.height/2 + ")") //y dimension of x axis
       .call(xAxis)
       .selectAll("text")  
             .style("text-anchor", "end")
-            .attr("dx", "-2em")
-            .attr("dy", "1em")
+            .attr("dx", "-0.5em")
+            .attr("dy", "0.25em")
             .attr("transform", function(d) {
                 return "rotate(-55)" 
                 });
@@ -124,20 +124,20 @@ function percentChange(dataset,config){
       .attr("transform", function(d, i) { return "translate(-100," + i * 20 + ")"; });
 
   legend.append("rect")
-      .attr("x", config.width - 18)
+      .attr("x", config.width - 30)
       .attr("width", 18)
       .attr("height", 18)
       .style("fill", "steelblue");
 
   legend.append("rect")
-      .attr("x", config.width - 18)
+      .attr("x", config.width - 30)
       .attr("y", 24)
       .attr("width", 18)
       .attr("height", 18)
       .style("fill", "brown");
 
   legend.append("text")
-      .attr("x", config.width - 24)
+      .attr("x", config.width - 20)
       .attr("y", 9)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
@@ -145,7 +145,7 @@ function percentChange(dataset,config){
 
 
   legend.append("text")
-      .attr("x", config.width - 24)
+      .attr("x", config.width - 20)
       .attr("y", 33)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
@@ -160,13 +160,14 @@ d3.csv("data.csv", function(error, data) {
     keyString: function(key) { return key == "2009 Usage (therms)" || key == "2013 Usage (therms)"; }, //comparison columns in chart
     htmlId: "#domId",
     yLabel: "Therms",
-    columns: ["Location", "Building Size (cubic feet)", "2009 Usage (therms)", "2013 Usage (therms)", "2009 Energy Intensity (therms/ft3)", "2013 Energy Intensity (therms/ft3)", "Percent Change"]
+    columns: ["Location", "Building Size (cubic feet)", "2009 Usage (therms)", "7/2008-6/2010 Largest Month (KWh)", "2009 Energy Intensity (therms/ft3)", "2013 Energy Intensity (therms/ft3)", "Percent Change"]
   };  
   config.width = 960 - config.margin.left - config.margin.right;
   config.height = 550 - config.margin.top - config.margin.bottom;
 
-  //remove the "totals" column after the table has loaded
-  data.pop();
+  //generateTable(data, config);
+  //remove the "totals" column after the table has loaded - if showing the table
+  //data.pop();
 
   //reset config properties and call percent change bar chart  
   config.htmlId= "#change";
